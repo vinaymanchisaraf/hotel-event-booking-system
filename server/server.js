@@ -4,33 +4,52 @@ const dotenv = require('dotenv')
 const fs = require('fs')
 const path = require('path')
 
-const db = require('./database/db')
-
 dotenv.config()
 
 const app = express()
 
-app.use(cors())
+app.use(
+  cors({
+    origin: '*',
+  })
+)
+
 app.use(express.json())
 
+const db = require('./database/db')
+
 const authRoutes = require('./routes/authRoutes')
+const reservationRoutes = require('./routes/reservationRoutes')
+const dashboardRoutes = require('./routes/dashboardRoutes')
 
 app.use('/api/auth', authRoutes)
+app.use('/api/reservations', reservationRoutes)
+app.use('/api/dashboard', dashboardRoutes)
 
-const schemaPath = path.join(__dirname, 'database', 'schema.sql')
+try {
+  const schemaPath = path.join(
+    __dirname,
+    'database',
+    'schema.sql'
+  )
 
-const schema = fs.readFileSync(schemaPath, 'utf-8')
+  const schema = fs.readFileSync(schemaPath, 'utf-8')
 
-db.exec(schema, error => {
-  if (error) {
-    console.log(error.message)
-  } else {
-    console.log('Database Tables Created')
-  }
-})
+  db.exec(schema, error => {
+    if (error) {
+      console.log('Schema Error:', error.message)
+    } else {
+      console.log('Database Tables Created')
+    }
+  })
+} catch (error) {
+  console.log('Schema File Error:', error.message)
+}
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Hotel Booking API Running' })
+  res.json({
+    message: 'Hotel Booking API Running',
+  })
 })
 
 const PORT = process.env.PORT || 5000
